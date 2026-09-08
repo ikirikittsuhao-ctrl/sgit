@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sgit</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- ログイン後のメインナビゲーションバー -->
+  <header id="main-navbar" class="navbar" style="display: none;">
+    <div class="nav-container">
+      <div class="brand">
+        <!-- sgit オリジナルSVGロゴ -->
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 8C12 5.79086 13.7909 4 16 4C18.2091 4 20 5.79086 20 8C20 9.85732 18.7328 11.4187 17 11.8543V14.1457C20.4357 14.9351 23 18.0101 23 21.6667C23 23.5076 21.5076 25 19.6667 25C17.8257 25 16.3333 23.5076 16.3333 21.6667V20.1667C16.3333 18.0496 14.6171 16.3333 12.5 16.3333H11V18.1457C9.26718 18.5813 8 20.1427 8 22C8 24.2091 9.79086 26 12 26" stroke="#2f81f7" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="16" cy="8" r="2" fill="#2f81f7"/>
+          <circle cx="12" cy="22" r="2" fill="#2f81f7"/>
+          <circle cx="19.6667" cy="21.6667" r="2" fill="#2f81f7"/>
+        </svg>
+        <span class="brand-name">sgit</span>
+      </div>
+      <div class="user-profile">
+        <span id="user-email-display"></span>
+        <button class="btn btn-outline btn-sm" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 認証コンテナ（ログイン画面 / 新規登録画面） -->
+  <div id="auth-container" class="auth-wrapper">
+    <div class="auth-header-logo">
+      <svg width="48" height="48" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 8C12 5.79086 13.7909 4 16 4C18.2091 4 20 5.79086 20 8C20 9.85732 18.7328 11.4187 17 11.8543V14.1457C20.4357 14.9351 23 18.0101 23 21.6667C23 23.5076 21.5076 25 19.6667 25C17.8257 25 16.3333 23.5076 16.3333 21.6667V20.1667C16.3333 18.0496 14.6171 16.3333 12.5 16.3333H11V18.1457C9.26718 18.5813 8 20.1427 8 22C8 24.2091 9.79086 26 12 26" stroke="#f0f6fc" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="16" cy="8" r="2" fill="#2f81f7"/>
+        <circle cx="12" cy="22" r="2" fill="#2f81f7"/>
+        <circle cx="19.6667" cy="21.6667" r="2" fill="#2f81f7"/>
+      </svg>
+    </div>
+
+    <!-- 1. Sign in 画面 -->
+    <div id="login-view" class="auth-card-view">
+      <h1 class="auth-title">Sign in to sgit</h1>
+      <div class="auth-box">
+        <div class="form-group">
+          <label for="login-email">Username or email address</label>
+          <input type="email" id="login-email" class="input" required>
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" class="input" required>
+        </div>
+        <button class="btn btn-primary btn-block" onclick="signIn()">Sign in</button>
+      </div>
+      <div class="auth-switch-box">
+        New to sgit? <a href="#" onclick="showRegisterView(event)">Create an account</a>.
+      </div>
+    </div>
+
+    <!-- 2. Sign up 画面 -->
+    <div id="register-view" class="auth-card-view" style="display: none;">
+      <h1 class="auth-title">Welcome to sgit!</h1>
+      <p class="auth-subtitle">First, create your personal account</p>
+      <div class="auth-box">
+        <div class="form-group">
+          <label for="reg-email">Enter your email</label>
+          <input type="email" id="reg-email" class="input" placeholder="name@example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="reg-password">Create a password</label>
+          <input type="password" id="reg-password" class="input" placeholder="At least 6 characters" required>
+        </div>
+        <button class="btn btn-success btn-block" onclick="signUp()">Create account</button>
+      </div>
+      <div class="auth-switch-box">
+        Already have an account? <a href="#" onclick="showLoginView(event)">Sign in</a>.
+      </div>
+    </div>
+  </div>
+
+  <!-- メインアプリケーション画面 -->
+  <main id="app-section" class="container" style="display: none;">
+    <div class="dashboard-header">
+      <div class="tabs">
+        <button id="tab-all" class="tab-btn active" onclick="switchTab('all')">Repositories</button>
+        <button id="tab-mine" class="tab-btn" onclick="switchTab('mine')">Your Repositories</button>
+      </div>
+      <button class="btn btn-success" onclick="openNewRepoModal()">
+        <span class="plus-icon">+</span> New
+      </button>
+    </div>
+
+    <div id="repo-list" class="repo-grid"></div>
+  </main>
+
+  <!-- モーダル: 新規リポジトリ作成 -->
+  <div id="repo-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Create a new repository</h3>
+        <button class="close-btn" onclick="closeNewRepoModal()">&times;</button>
+      </div>
+      <form id="create-repo-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="repo-name">Repository name <span class="required">*</span></label>
+            <input type="text" id="repo-name" class="input" placeholder="my-awesome-project" required>
+          </div>
+          <div class="form-group">
+            <label for="repo-desc">Description (optional)</label>
+            <textarea id="repo-desc" class="input" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeNewRepoModal()">Cancel</button>
+          <button type="submit" class="btn btn-success">Create repository</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- モーダル: コードプレビュー -->
+  <div id="preview-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 id="preview-filename">File Preview</h3>
+        <button class="close-btn" onclick="closePreviewModal()">&times;</button>
+      </div>
+      <div class="modal-body code-body">
+        <pre><code id="preview-content">Loading...</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- トースト通知 -->
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
