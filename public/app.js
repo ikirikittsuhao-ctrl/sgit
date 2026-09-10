@@ -5,8 +5,8 @@
 // =========================================================
 
 // SupabaseはStorageの公開URL取得にのみ使用します。
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://vkgkkvxybqcfbomvhgwa.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_uC9VF8HVY6a1_XT3N-w8xQ_Efnc-Oih";
 
 const supabaseClient = supabase.createClient(
   SUPABASE_URL,
